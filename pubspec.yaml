@@ -1,0 +1,25 @@
+name: ai_emergency_shouter
+version: 0.1.0+1
+description: Beginner-friendly AI Emergency Shouter app
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  supabase_flutter: ^2.5.6
+  geolocator: ^12.0.0
+  path_provider: ^2.1.4
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

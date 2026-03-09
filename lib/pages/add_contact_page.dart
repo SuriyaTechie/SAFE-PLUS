@@ -89,13 +89,13 @@ class _AddContactPageState extends State<AddContactPage> {
                             Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                CircleAvatar(
+                                const CircleAvatar(
                                   radius: 62,
-                                  backgroundColor: const Color(0xFFE2E1E5),
+                                  backgroundColor: Color(0xFFE2E1E5),
                                   child: Icon(
                                     Icons.person,
                                     size: 58,
-                                    color: const Color(0xFF936868).withValues(alpha: 0.9),
+                                    color: Color.fromRGBO(147, 104, 104, 0.9),
                                   ),
                                 ),
                                 Positioned(

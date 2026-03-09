@@ -137,6 +137,10 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushReplacement(context, noAnimationRoute(const LoginPage()));
   }
 
+  void _showInfo(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void dispose() {
     _holdTimer?.cancel();
@@ -205,7 +209,7 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.auto_awesome_outlined,
                       title: 'AIntelligent Shield',
                       subtitle: 'Active - Low Profile',
-                      onTap: () {},
+                      onTap: () => _showInfo('AI Shield panel coming soon.'),
                     ),
                     _buildMenuCard(
                       iconBg: const Color(0xFFE8F8EF),
@@ -213,7 +217,7 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.lock_outline,
                       title: 'Security Audit',
                       subtitle: 'Permissions up to date',
-                      onTap: () {},
+                      onTap: () => _showInfo('Security Audit details coming soon.'),
                     ),
                   ],
                 ),

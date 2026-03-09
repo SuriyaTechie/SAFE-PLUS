@@ -12,6 +12,10 @@ import 'profile_page.dart';
 class ContactListPage extends StatelessWidget {
   const ContactListPage({super.key});
 
+  void _showActionSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _handleNavTap(BuildContext context, int index) {
     if (index == 0) {
       Navigator.pushReplacement(context, noAnimationRoute(const HomePage()));
@@ -42,6 +46,22 @@ class ContactListPage extends StatelessWidget {
     Navigator.pushReplacement(context, noAnimationRoute(const HomePage()));
   }
 
+  void _openEditContact(
+    BuildContext context, {
+    required String name,
+    required String relationship,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddContactPage(
+          initialName: name,
+          initialRelationship: relationship,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,6 +86,9 @@ class ContactListPage extends StatelessWidget {
                       subtitle: 'Spouse - Medical Proxy',
                       avatarColor: const Color(0xFFE4F3FF),
                       avatarLetter: 'D',
+                      onCallTap: () => _showActionSnackBar(context, 'Calling David Henderson...'),
+                      onMessageTap: () =>
+                          _showActionSnackBar(context, 'Opening chat with David Henderson...'),
                     ),
                     const SizedBox(height: 12),
                     _buildPriorityCard(
@@ -73,6 +96,9 @@ class ContactListPage extends StatelessWidget {
                       subtitle: 'Sister - Emergency Contact',
                       avatarColor: const Color(0xFFFFE9DF),
                       avatarLetter: 'S',
+                      onCallTap: () => _showActionSnackBar(context, 'Calling Sarah Mitchell...'),
+                      onMessageTap: () =>
+                          _showActionSnackBar(context, 'Opening chat with Sarah Mitchell...'),
                     ),
                     const SizedBox(height: 18),
                     _buildSectionHeader('FAMILY', null),
@@ -83,6 +109,12 @@ class ContactListPage extends StatelessWidget {
                       avatarColor: const Color(0xFFFFEFD8),
                       avatarLetter: 'M',
                       lastActionIcon: Icons.edit_rounded,
+                      onCallTap: () => _showActionSnackBar(context, 'Calling Marcus Chen...'),
+                      onLastActionTap: () => _openEditContact(
+                        context,
+                        name: 'Marcus Chen',
+                        relationship: 'Sibling',
+                      ),
                     ),
                     const SizedBox(height: 16),
                     _buildSectionHeader('MEDICAL', null),
@@ -93,6 +125,9 @@ class ContactListPage extends StatelessWidget {
                       avatarColor: const Color(0xFFE9F7F2),
                       avatarLetter: 'E',
                       lastActionIcon: Icons.more_vert_rounded,
+                      onCallTap: () => _showActionSnackBar(context, 'Calling Dr. Emily Rodriguez...'),
+                      onLastActionTap: () =>
+                          _showActionSnackBar(context, 'More actions coming soon.'),
                     ),
                     const SizedBox(height: 90),
                   ],
@@ -150,7 +185,11 @@ class ContactListPage extends StatelessWidget {
             ],
           ),
         ),
-        _roundIconButton(Icons.settings, filled: true),
+        _roundIconButton(
+          Icons.settings,
+          filled: true,
+          onTap: () => _showActionSnackBar(context, 'Settings panel coming soon.'),
+        ),
       ],
     );
   }
@@ -215,6 +254,8 @@ class ContactListPage extends StatelessWidget {
     required String subtitle,
     required Color avatarColor,
     required String avatarLetter,
+    required VoidCallback onCallTap,
+    required VoidCallback onMessageTap,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -271,6 +312,7 @@ class ContactListPage extends StatelessWidget {
                   label: 'Call',
                   icon: Icons.call,
                   filled: true,
+                  onTap: onCallTap,
                 ),
               ),
               const SizedBox(width: 10),
@@ -279,6 +321,7 @@ class ContactListPage extends StatelessWidget {
                   label: 'Message',
                   icon: Icons.chat_bubble,
                   filled: false,
+                  onTap: onMessageTap,
                 ),
               ),
             ],
@@ -294,6 +337,8 @@ class ContactListPage extends StatelessWidget {
     required Color avatarColor,
     required String avatarLetter,
     required IconData lastActionIcon,
+    VoidCallback? onCallTap,
+    VoidCallback? onLastActionTap,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -328,9 +373,13 @@ class ContactListPage extends StatelessWidget {
               ],
             ),
           ),
-          _smallCircleIcon(Icons.call, const Color(0xFFEEF1F5)),
+          _smallCircleIcon(Icons.call, const Color(0xFFEEF1F5), onTap: onCallTap),
           const SizedBox(width: 8),
-          _smallCircleIcon(lastActionIcon, const Color(0xFFEEF1F5)),
+          _smallCircleIcon(
+            lastActionIcon,
+            const Color(0xFFEEF1F5),
+            onTap: onLastActionTap,
+          ),
         ],
       ),
     );
@@ -340,28 +389,36 @@ class ContactListPage extends StatelessWidget {
     required String label,
     required IconData icon,
     required bool filled,
+    VoidCallback? onTap,
   }) {
     final textColor = filled ? Colors.white : const Color(0xFF233045);
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: filled ? const Color(0xFFFF1111) : const Color(0xFFF1F4F8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 17, color: textColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-            ),
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: filled ? const Color(0xFFFF1111) : const Color(0xFFF1F4F8),
+            borderRadius: BorderRadius.circular(24),
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 17, color: textColor),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -423,12 +480,20 @@ class ContactListPage extends StatelessWidget {
     );
   }
 
-  Widget _smallCircleIcon(IconData icon, Color bg) {
-    return Container(
+  Widget _smallCircleIcon(IconData icon, Color bg, {VoidCallback? onTap}) {
+    final child = Container(
       width: 30,
       height: 30,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
       child: Icon(icon, size: 16, color: const Color(0xFF526176)),
+    );
+    if (onTap == null) {
+      return child;
+    }
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: child,
     );
   }
 

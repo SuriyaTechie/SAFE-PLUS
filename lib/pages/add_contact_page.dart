@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AddContactPage extends StatefulWidget {
-  const AddContactPage({super.key});
+  const AddContactPage({
+    super.key,
+    this.initialName,
+    this.initialPhone,
+    this.initialRelationship,
+  });
+
+  final String? initialName;
+  final String? initialPhone;
+  final String? initialRelationship;
 
   @override
   State<AddContactPage> createState() => _AddContactPageState();
@@ -19,12 +28,25 @@ class _AddContactPageState extends State<AddContactPage> {
     'Neighbor',
   ];
   String? _selectedRelationship;
+  bool get _isEditMode => widget.initialName != null || widget.initialPhone != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.initialName ?? '';
+    _phoneController.text = widget.initialPhone ?? '';
+    if (widget.initialRelationship != null &&
+        _relationships.contains(widget.initialRelationship)) {
+      _selectedRelationship = widget.initialRelationship;
+    }
+  }
 
   void _saveContact() {
-    // Starter UI only. Later, call FastAPI /contacts endpoint here.
+    final actionText = _isEditMode ? 'Updated' : 'Saved';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Saved ${_nameController.text} (demo).')),
+      SnackBar(content: Text('$actionText ${_nameController.text} (demo).')),
     );
+    Navigator.maybePop(context);
   }
 
   @override
@@ -59,9 +81,9 @@ class _AddContactPageState extends State<AddContactPage> {
                         ),
                       ),
                     ),
-                    const Text(
-                      'Add Emergency Contact',
-                      style: TextStyle(
+                    Text(
+                      _isEditMode ? 'Edit Emergency Contact' : 'Add Emergency Contact',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF232C3D),
@@ -190,19 +212,19 @@ class _AddContactPageState extends State<AddContactPage> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Save Contact',
-                                style: TextStyle(
+                                _isEditMode ? 'Update Contact' : 'Save Contact',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 28,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              SizedBox(width: 10),
-                              Icon(
+                              const SizedBox(width: 10),
+                              const Icon(
                                 Icons.check_circle,
                                 color: Colors.white,
                                 size: 22,

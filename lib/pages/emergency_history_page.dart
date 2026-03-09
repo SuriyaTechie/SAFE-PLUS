@@ -50,6 +50,40 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
     ),
   ];
 
+  List<_HistoryItem> get _filteredItems {
+    if (_activeTab == 1) {
+      return _items
+          .where((item) => item.status == 'TRIGGERED' || item.status == 'ACTIVATED')
+          .toList();
+    }
+    if (_activeTab == 2) {
+      return _items.where((item) => item.status == 'CANCELLED').toList();
+    }
+    return _items;
+  }
+
+  void _showInfo(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showDetails(_HistoryItem item) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(item.title),
+        content: Text(
+          'Status: ${item.status}\n\nTime: ${item.dateTime}\n\nLocation: ${item.address}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleNavTap(int index) {
     if (index == 2) return;
 
@@ -93,10 +127,29 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
             _buildTabs(),
             const SizedBox(height: 2),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-                itemCount: _items.length,
-                itemBuilder: (context, index) => _buildTimelineItem(_items[index], index),
+              child: Builder(
+                builder: (context) {
+                  final visibleItems = _filteredItems;
+                  if (visibleItems.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No history in this tab.',
+                        style: TextStyle(
+                          color: Color(0xFF647892),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                    itemCount: visibleItems.length,
+                    itemBuilder: (context, index) => _buildTimelineItem(
+                      visibleItems[index],
+                      isLast: index == visibleItems.length - 1,
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -128,7 +181,10 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
             ),
           ),
         ),
-        _circleIconButton(Icons.tune_rounded),
+        _circleIconButton(
+          Icons.tune_rounded,
+          onTap: () => _showInfo('Filter options coming soon.'),
+        ),
       ],
     );
   }
@@ -170,7 +226,7 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
     );
   }
 
-  Widget _buildTimelineItem(_HistoryItem item, int index) {
+  Widget _buildTimelineItem(_HistoryItem item, {required bool isLast}) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -188,7 +244,7 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
                   ),
                   child: Icon(item.timelineIcon, size: 15, color: item.timelineColor),
                 ),
-                if (index != _items.length - 1)
+                if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
@@ -278,19 +334,25 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'View Details  >',
-                              style: TextStyle(
-                                color: Color(0xFFFA1F1F),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
+                            InkWell(
+                              onTap: () => _showDetails(item),
+                              child: const Text(
+                                'View Details  >',
+                                style: TextStyle(
+                                  color: Color(0xFFFA1F1F),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 10),
-                      _mapPreview(item.previewColor),
+                      _mapPreview(
+                        item.previewColor,
+                        onTap: () => _showInfo('Opening location preview for ${item.title}.'),
+                      ),
                     ],
                   ),
                 ],
@@ -302,34 +364,38 @@ class _EmergencyHistoryPageState extends State<EmergencyHistoryPage> {
     );
   }
 
-  Widget _mapPreview(Color color) {
-    return Container(
-      width: 78,
-      height: 70,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MapGridPainter(),
+  Widget _mapPreview(Color color, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 78,
+        height: 70,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _MapGridPainter(),
+              ),
             ),
-          ),
-          Center(
-            child: SizedBox(
-              width: 6,
-              height: 6,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white70,
-                  shape: BoxShape.circle,
+            Center(
+              child: SizedBox(
+                width: 6,
+                height: 6,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white70,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

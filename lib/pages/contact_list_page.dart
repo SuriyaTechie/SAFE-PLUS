@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/nav_utils.dart';
+import '../utils/phone_utils.dart';
 import '../widgets/main_bottom_nav.dart';
 import 'add_contact_page.dart';
 import 'emergency_history_page.dart';
@@ -12,8 +14,40 @@ import 'profile_page.dart';
 class ContactListPage extends StatelessWidget {
   const ContactListPage({super.key});
 
+  static final Map<String, String> _contactPhones = {
+    'David Henderson': '+919876543210',
+    'Sarah Mitchell': '+919812345678',
+    'Marcus Chen': '+919811112222',
+    'Dr. Emily Rodriguez': '+919800001111',
+  };
+
   void _showActionSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _phoneOf(String name) {
+    return _contactPhones[name] ?? '+919999999999';
+  }
+
+  Future<void> _dialContact(
+    BuildContext context, {
+    required String name,
+    required String phone,
+  }) async {
+    final normalized = normalizeIndianPhone(phone);
+    if (normalized == null) {
+      _showActionSnackBar(context, 'Invalid phone number for $name');
+      return;
+    }
+
+    final uri = Uri(
+      scheme: 'tel',
+      path: normalized,
+    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      _showActionSnackBar(context, 'Unable to open dialer for $name');
+    }
   }
 
   void _handleNavTap(BuildContext context, int index) {
@@ -46,20 +80,33 @@ class ContactListPage extends StatelessWidget {
     Navigator.pushReplacement(context, noAnimationRoute(const HomePage()));
   }
 
-  void _openEditContact(
+  Future<void> _openEditContact(
     BuildContext context, {
     required String name,
+    required String phone,
     required String relationship,
-  }) {
-    Navigator.push(
+  }) async {
+    final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (_) => AddContactPage(
           initialName: name,
+          initialPhone: phone,
           initialRelationship: relationship,
         ),
       ),
     );
+    if (result == null) {
+      return;
+    }
+
+    final normalized = normalizeIndianPhone((result['phone'] ?? '').toString());
+    if (normalized != null) {
+      _contactPhones[name] = normalized;
+      if (context.mounted) {
+        _showActionSnackBar(context, '$name number saved: $normalized');
+      }
+    }
   }
 
   @override
@@ -86,7 +133,11 @@ class ContactListPage extends StatelessWidget {
                       subtitle: 'Spouse - Medical Proxy',
                       avatarColor: const Color(0xFFE4F3FF),
                       avatarLetter: 'D',
-                      onCallTap: () => _showActionSnackBar(context, 'Calling David Henderson...'),
+                      onCallTap: () => _dialContact(
+                        context,
+                        name: 'David Henderson',
+                        phone: _phoneOf('David Henderson'),
+                      ),
                       onMessageTap: () =>
                           _showActionSnackBar(context, 'Opening chat with David Henderson...'),
                     ),
@@ -96,7 +147,11 @@ class ContactListPage extends StatelessWidget {
                       subtitle: 'Sister - Emergency Contact',
                       avatarColor: const Color(0xFFFFE9DF),
                       avatarLetter: 'S',
-                      onCallTap: () => _showActionSnackBar(context, 'Calling Sarah Mitchell...'),
+                      onCallTap: () => _dialContact(
+                        context,
+                        name: 'Sarah Mitchell',
+                        phone: _phoneOf('Sarah Mitchell'),
+                      ),
                       onMessageTap: () =>
                           _showActionSnackBar(context, 'Opening chat with Sarah Mitchell...'),
                     ),
@@ -109,10 +164,15 @@ class ContactListPage extends StatelessWidget {
                       avatarColor: const Color(0xFFFFEFD8),
                       avatarLetter: 'M',
                       lastActionIcon: Icons.edit_rounded,
-                      onCallTap: () => _showActionSnackBar(context, 'Calling Marcus Chen...'),
+                      onCallTap: () => _dialContact(
+                        context,
+                        name: 'Marcus Chen',
+                        phone: _phoneOf('Marcus Chen'),
+                      ),
                       onLastActionTap: () => _openEditContact(
                         context,
                         name: 'Marcus Chen',
+                        phone: _phoneOf('Marcus Chen'),
                         relationship: 'Sibling',
                       ),
                     ),
@@ -125,7 +185,11 @@ class ContactListPage extends StatelessWidget {
                       avatarColor: const Color(0xFFE9F7F2),
                       avatarLetter: 'E',
                       lastActionIcon: Icons.more_vert_rounded,
-                      onCallTap: () => _showActionSnackBar(context, 'Calling Dr. Emily Rodriguez...'),
+                      onCallTap: () => _dialContact(
+                        context,
+                        name: 'Dr. Emily Rodriguez',
+                        phone: _phoneOf('Dr. Emily Rodriguez'),
+                      ),
                       onLastActionTap: () =>
                           _showActionSnackBar(context, 'More actions coming soon.'),
                     ),
@@ -139,8 +203,19 @@ class ContactListPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFEB1010),
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddContactPage()));
+        onPressed: () async {
+          final result = await Navigator.push<Map<String, dynamic>>(
+            context,
+            MaterialPageRoute(builder: (_) => const AddContactPage()),
+          );
+          final name = (result?['name'] ?? '').toString().trim();
+          final phone = normalizeIndianPhone((result?['phone'] ?? '').toString());
+          if (name.isNotEmpty && phone != null) {
+            _contactPhones[name] = phone;
+            if (context.mounted) {
+              _showActionSnackBar(context, '$name saved with number $phone');
+            }
+          }
         },
         child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
       ),

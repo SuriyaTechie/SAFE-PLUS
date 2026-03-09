@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/phone_utils.dart';
+
 class AddContactPage extends StatefulWidget {
   const AddContactPage({
     super.key,
@@ -34,7 +36,8 @@ class _AddContactPageState extends State<AddContactPage> {
   void initState() {
     super.initState();
     _nameController.text = widget.initialName ?? '';
-    _phoneController.text = widget.initialPhone ?? '';
+    _phoneController.text =
+        widget.initialPhone == null ? '' : (normalizeIndianPhone(widget.initialPhone!) ?? '');
     if (widget.initialRelationship != null &&
         _relationships.contains(widget.initialRelationship)) {
       _selectedRelationship = widget.initialRelationship;
@@ -42,11 +45,33 @@ class _AddContactPageState extends State<AddContactPage> {
   }
 
   void _saveContact() {
+    final name = _nameController.text.trim();
+    final normalizedPhone = normalizeIndianPhone(_phoneController.text);
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a contact name.')),
+      );
+      return;
+    }
+
+    if (normalizedPhone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid mobile number. Format: +91XXXXXXXXXX')),
+      );
+      return;
+    }
+
+    _phoneController.text = normalizedPhone;
     final actionText = _isEditMode ? 'Updated' : 'Saved';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$actionText ${_nameController.text} (demo).')),
+      SnackBar(content: Text('$actionText $name - $normalizedPhone')),
     );
-    Navigator.maybePop(context);
+    Navigator.pop(context, {
+      'name': name,
+      'phone': normalizedPhone,
+      'relationship': _selectedRelationship ?? '',
+    });
   }
 
   @override
@@ -182,7 +207,7 @@ class _AddContactPageState extends State<AddContactPage> {
                     const SizedBox(height: 8),
                     _buildTextField(
                       controller: _phoneController,
-                      hint: '+1 (555) 000-0000',
+                      hint: '+91 9876543210',
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 18),
